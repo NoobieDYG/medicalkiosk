@@ -1,6 +1,6 @@
 from datetime import time
 
-from databases import SessionLocal
+from databases.db import SessionLocal
 from databases.models import DoctorSchedules
 
 SCHEDULE_SEED_DATA = [
