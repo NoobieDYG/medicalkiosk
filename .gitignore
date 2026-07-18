@@ -1,0 +1,6 @@
+.vscode
+.env
+__pycache__
+test.py
+prompt_analysis.py
+.github

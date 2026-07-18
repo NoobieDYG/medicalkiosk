@@ -1,4 +1,4 @@
-from databases import SessionLocal
+from databases.db import SessionLocal
 from databases.models import ICDCodes
 from triage.embeddings import get_embedding
 
