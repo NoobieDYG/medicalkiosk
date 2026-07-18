@@ -1,9 +1,9 @@
 import json
 import uuid
 
-from app.core.redis_client import redis_client  # adjust import to your actual path
+from databases.redis_client import redis_client  
 
-SESSION_TTL_SECONDS = 1800  # 30 min — if a patient walks away, the session just expires
+SESSION_TTL_SECONDS = 1800  
 SESSION_KEY_PREFIX = "triage_session:"
 
 

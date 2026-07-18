@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from databases import get_db
+from databases.db import get_db
 from doctor.doctors import get_doctor_by_id
 from databases.models import Queue, Triage, Visits
 from triage.logic import process_message
