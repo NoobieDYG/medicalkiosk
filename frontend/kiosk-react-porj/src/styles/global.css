@@ -1,0 +1,46 @@
+/* Base reset + font loading. Swap the @import for self-hosted fonts
+   before shipping to an actual kiosk with no/unreliable internet. */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=Public+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden; /* kiosk = fixed viewport, no page scroll */
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* Respect reduced motion preference — kiosk still functions, just
+   without the mascot's ambient pulsing / transition animations. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "detailed": [
+    {
+      "label": "PROSE",
+      "static_system_prompt_tokens": 270,
+      "runs": [
+        {
+          "run": 1,
+          "accuracy": 1.0,
+          "mismatches": [],
+          "confusion": {
+            "safe": {
+              "safe": 6
+            },
+            "moderate": {
+              "moderate": 6
+            },
+            "destructive": {
+              "destructive": 10
+            },
+            "blocked": {
+              "blocked": 9
+            }
+          },
+          "prompt_tokens": 1097,
+          "completion_tokens": 478,
+          "total_tokens": 1575
+        },
+        {
+          "run": 2,
+          "accuracy": 1.0,
+          "mismatches": [],
+          "confusion": {
+            "safe": {
+              "safe": 6
+            },
+            "moderate": {
+              "moderate": 6
+            },
+            "destructive": {
+              "destructive": 10
+            },
+            "blocked": {
+              "blocked": 9
+            }
+          },
+          "prompt_tokens": 1097,
+          "completion_tokens": 478,
+          "total_tokens": 1575
+        },
+        {
+          "run": 3,
+          "accuracy": 1.0,
+          "mismatches": [],
+          "confusion": {
+            "safe": {
+              "safe": 6
+            },
+            "moderate": {
+              "moderate": 6
+            },
+            "destructive": {
+              "destructive": 10
+            },
+            "blocked": {
+              "blocked": 9
+            }
+          },
+          "prompt_tokens": 1097,
+          "completion_tokens": 478,
+          "total_tokens": 1575
+        }
+      ]
+    },
+    {
+      "label": "JSON",
+      "static_system_prompt_tokens": 306,
+      "runs": [
+        {
+          "run": 1,
+          "accuracy": 1.0,
+          "mismatches": [],
+          "confusion": {
+            "safe": {
+              "safe": 6
+            },
+            "moderate": {
+              "moderate": 6
+            },
+            "destructive": {
+              "destructive": 10
+            },
+            "blocked": {
+              "blocked": 9
+            }
+          },
+          "prompt_tokens": 1133,
+          "completion_tokens": 633,
+          "total_tokens": 1766
+        },
+        {
+          "run": 2,
+          "accuracy": 1.0,
+          "mismatches": [],
+          "confusion": {
+            "safe": {
+              "safe": 6
+            },
+            "moderate": {
+              "moderate": 6
+            },
+            "destructive": {
+              "destructive": 10
+            },
+            "blocked": {
+              "blocked": 9
+            }
+          },
+          "prompt_tokens": 1133,
+          "completion_tokens": 633,
+          "total_tokens": 1766
+        },
+        {
+          "run": 3,
+          "accuracy": 1.0,
+          "mismatches": [],
+          "confusion": {
+            "safe": {
+              "safe": 6
+            },
+            "moderate": {
+              "moderate": 6
+            },
+            "destructive": {
+              "destructive": 10
+            },
+            "blocked": {
+              "blocked": 9
+            }
+          },
+          "prompt_tokens": 1133,
+          "completion_tokens": 633,
+          "total_tokens": 1766
+        }
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "label": "PROSE",
+      "static_prompt_tokens": 270,
+      "avg_accuracy": 1.0,
+      "avg_prompt_tokens": 1097.0,
+      "avg_total_tokens": 1575.0,
+      "parse_failures": 0,
+      "recurring_mismatches": {}
+    },
+    {
+      "label": "JSON",
+      "static_prompt_tokens": 306,
+      "avg_accuracy": 1.0,
+      "avg_prompt_tokens": 1133.0,
+      "avg_total_tokens": 1766.0,
+      "parse_failures": 0,
+      "recurring_mismatches": {}
+    }
+  ]
+}

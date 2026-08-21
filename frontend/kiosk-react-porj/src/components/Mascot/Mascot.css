@@ -1,0 +1,152 @@
+.mascot {
+  width: clamp(160px, 20vw, 260px);
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mascot__svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Voice ring (circle form) ---- */
+.mascot__ring {
+  stroke: var(--color-primary);
+  opacity: 0.15;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity var(--duration-base) var(--ease-standard);
+}
+
+.mascot--listening .mascot__ring {
+  stroke: var(--color-accent);
+  opacity: 0.9;
+  animation: ring-pulse 1.6s ease-in-out infinite;
+}
+
+.mascot--processing .mascot__ring {
+  stroke: var(--color-primary);
+  opacity: 0.6;
+  stroke-dasharray: 12 10;
+  animation: ring-spin 1.2s linear infinite;
+}
+
+.mascot--talking .mascot__ring {
+  opacity: 0;
+}
+
+@keyframes ring-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50%      { transform: scale(1.06); opacity: 0.45; }
+}
+
+@keyframes ring-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ---- Voice ring (waveform form — talking only) ---- */
+.mascot__waveform {
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.mascot--talking .mascot__waveform {
+  opacity: 1;
+}
+
+.mascot__bar {
+  fill: var(--color-accent);
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  transform: scaleY(0.4);
+}
+
+.mascot--talking .mascot__bar {
+  animation: bar-pulse 900ms ease-in-out infinite;
+}
+
+@keyframes bar-pulse {
+  0%, 100% { transform: scaleY(0.4); }
+  50%      { transform: scaleY(1.3); }
+}
+
+/* ---- Body ---- */
+.mascot__body {
+  fill: var(--color-primary);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.mascot--idle .mascot__body {
+  animation: breathe 3.4s ease-in-out infinite;
+}
+
+.mascot--listening .mascot__body {
+  animation: breathe 1.2s ease-in-out infinite;
+}
+
+.mascot--processing .mascot__body {
+  animation: breathe 2s ease-in-out infinite;
+}
+
+.mascot--talking .mascot__body {
+  animation: none;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.03); }
+}
+
+/* ---- Eyes ---- */
+.mascot__eye {
+  fill: var(--color-canvas-raised);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.mascot--idle .mascot__eye {
+  animation: blink 5s ease-in-out infinite;
+}
+
+.mascot--processing .mascot__eye {
+  transform: translateY(-2px);
+}
+
+@keyframes blink {
+  0%, 96%, 100% { transform: scaleY(1); }
+  98%           { transform: scaleY(0.1); }
+}
+
+/* ---- Mouth ---- */
+.mascot__mouth {
+  fill: var(--color-canvas-raised);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.mascot--idle .mascot__mouth {
+  transform: scaleY(1);
+}
+
+.mascot--listening .mascot__mouth {
+  transform: scaleY(1.5);
+}
+
+.mascot--processing .mascot__mouth {
+  transform: scaleY(0.6);
+}
+
+.mascot--talking .mascot__mouth {
+  animation: mouth-talk 420ms ease-in-out infinite;
+}
+
+@keyframes mouth-talk {
+  0%, 100% { transform: scaleY(0.6); }
+  50%      { transform: scaleY(2.2); }
+}
