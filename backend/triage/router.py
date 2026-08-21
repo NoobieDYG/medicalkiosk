@@ -42,11 +42,13 @@ def send_message(payload: TriageMessageRequest, db: Session = Depends(get_db)):
     return TriageMessageResponse(reply=reply, stage=state["stage"], doctor_options=doctor_options)
 
 
-@router.post("/end", response_model=TriageEndResponse)
-def end_triage(payload: TriageEndRequest, db: Session = Depends(get_db)):
-    state = get_session(payload.session_id)
-    if state is None:
-        raise HTTPException(status_code=404, detail="Session expired or not found.")
+def finalize_triage(db: Session, session_id: str, state: dict) -> TriageEndResponse:
+    """
+    Shared finalize logic used by both the REST /triage/end endpoint and the
+    WebSocket flow. Creates the Visit, Queue token, and Triage transcript
+    record, then deletes the Redis session. Raises HTTPException if the
+    session isn't actually ready to finalize.
+    """
     if state["stage"] != TriageStage.READY_TO_FINALIZE.value:
         raise HTTPException(status_code=400, detail="Triage isn't finished yet — doctor hasn't been confirmed.")
 
@@ -61,6 +63,8 @@ def end_triage(payload: TriageEndRequest, db: Session = Depends(get_db)):
         icd_code=state.get("icd_code"),
         ai_impression=state.get("ai_impression"),
         status="waiting",
+        hospital_id=state.get("hospital_id"),
+        kiosk_id=state.get("kiosk_id"),
     )
     db.add(visit)
     db.commit()
@@ -78,7 +82,7 @@ def end_triage(payload: TriageEndRequest, db: Session = Depends(get_db)):
     db.add(Triage(visit_id=visit.id, conversation_json=state["messages"]))
     db.commit()
 
-    delete_session(payload.session_id)
+    delete_session(session_id)
 
     return TriageEndResponse(
         token_number=next_token,
@@ -86,3 +90,12 @@ def end_triage(payload: TriageEndRequest, db: Session = Depends(get_db)):
         department=state["department"],
         visit_id=visit.id,
     )
+
+
+@router.post("/end", response_model=TriageEndResponse)
+def end_triage(payload: TriageEndRequest, db: Session = Depends(get_db)):
+    state = get_session(payload.session_id)
+    if state is None:
+        raise HTTPException(status_code=404, detail="Session expired or not found.")
+
+    return finalize_triage(db, payload.session_id, state)

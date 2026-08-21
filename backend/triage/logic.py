@@ -46,6 +46,15 @@ def recommend_doctors(db: Session, state: dict):
 def process_message(db: Session, state: dict, user_message: str):
     stage = state["stage"]
     doctor_options = None
+    
+    # Ensure symptom_data is properly initialized (defensive against Redis deserialization issues)
+    if not isinstance(state.get("symptom_data"), dict):
+        state["symptom_data"] = {
+            "symptom": None,
+            "body_part": None,
+            "duration": None,
+            "severity": None,
+        }
 
     if stage in (TriageStage.GREETING.value, TriageStage.COLLECTING_SYMPTOMS.value):
         extracted = extract_symptom_data(user_message)
@@ -105,7 +114,10 @@ def process_message(db: Session, state: dict, user_message: str):
         state["selected_doctor_id"] = chosen["id"]
         state["stage"] = TriageStage.READY_TO_FINALIZE.value
         reply = f"Great, Dr. {chosen['name']} it is. Tap confirm to get your token."
-
+    elif stage == TriageStage.RECOMMENDING_DOCTOR.value:
+        reply = "No problem — please check in at the front desk and they'll help you from here. Take care!"
+    elif stage == TriageStage.READY_TO_FINALIZE.value:
+        reply = "Please tap Confirm to get your token."
     else:
         reply = "Sorry, I didn't quite catch that."
 

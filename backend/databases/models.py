@@ -1,5 +1,6 @@
 from sqlalchemy import *
 from sqlalchemy.orm import relationship
+from pgvector.sqlalchemy import Vector
 from .db import Base
 import datetime
 
@@ -40,6 +41,7 @@ class Visits(Base):
     __tablename__ = "visits"
     id = Column(Integer, primary_key=True, index=True)
     hospital_id = Column(Integer, default=1, nullable=False)
+    kiosk_id = Column(Integer, default = 1, nullable = True)
     patient_id = Column(Integer, ForeignKey('patients.id'), nullable=False, index=True)
     doctor_id = Column(Integer, ForeignKey('doctors.id'), nullable=False, index=True)
     symptom_summary = Column(String)
@@ -76,5 +78,5 @@ class ICDCodes(Base):
     code = Column(String, nullable=False, index=True)
     description = Column(String, nullable=False)
     department = Column(String, nullable=False)
-    embedding = Column(JSON)
+    embedding = Column(Vector(512))  # Adjust the dimension based on your embedding model
 
