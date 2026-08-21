@@ -1,0 +1,52 @@
+.stage-layout {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  transition: gap var(--duration-layout) var(--ease-standard);
+}
+
+.stage-layout__primary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  transition: flex-basis var(--duration-layout) var(--ease-standard),
+              width var(--duration-layout) var(--ease-standard);
+}
+
+.stage-layout__panel {
+  overflow: hidden;
+  transition: flex-basis var(--duration-layout) var(--ease-standard),
+              width var(--duration-layout) var(--ease-standard),
+              opacity var(--duration-layout) var(--ease-standard);
+}
+
+/* Centered mode: primary content takes full width, panel is collapsed */
+.stage-layout--centered .stage-layout__primary {
+  width: 100%;
+  flex-basis: 100%;
+  align-items: center;
+  text-align: center;
+}
+
+.stage-layout--centered .stage-layout__panel {
+  width: 0;
+  flex-basis: 0;
+  opacity: 0;
+}
+
+/* Split mode: primary shifts to ~35%, panel takes ~65% */
+.stage-layout--split .stage-layout__primary {
+  width: 35%;
+  flex-basis: 35%;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.stage-layout--split .stage-layout__panel {
+  width: 65%;
+  flex-basis: 65%;
+  opacity: 1;
+}

@@ -1,0 +1,30 @@
+.transcript {
+  width: 100%;
+  max-height: 40vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  scrollbar-width: none; /* kiosk UI - no visible scrollbar chrome */
+}
+
+.transcript::-webkit-scrollbar {
+  display: none;
+}
+
+.transcript__line {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  color: var(--color-ink-muted);
+  transition: color var(--duration-base) var(--ease-standard),
+              font-size var(--duration-base) var(--ease-standard);
+}
+
+/* The most recent line is what the mascot is "currently saying" -
+   visually promoted so it reads as active, older lines recede as history. */
+.transcript__line--latest {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-ink);
+}

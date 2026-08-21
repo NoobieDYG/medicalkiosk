@@ -1,0 +1,71 @@
+/* src/styles/tokens.css */
+
+:root {
+  /* ---- Color ---- */
+  --color-canvas: #F2F6F4;       /* page background */
+  --color-canvas-raised: #FFFFFF; /* cards, panels sitting above canvas */
+  --color-ink: #1C2521;           /* primary text */
+  --color-ink-muted: #5B6A65;     /* secondary text, timestamps, captions */
+
+  --color-primary: #1F5F5B;       /* brand teal - buttons, mascot core, links */
+  --color-primary-hover: #184A47;
+  --color-primary-soft: #E4EEEC;  /* teal-tinted backgrounds, selected states */
+
+  --color-accent: #E8A33D;        /* marigold - listening/active state, voice ring */
+  --color-accent-soft: #FBEDD3;
+
+  --color-success: #4C9A6A;       /* doctor available */
+  --color-success-soft: #E4F1E9;
+
+  --color-alert: #D65A4A;         /* unavailable, errors */
+  --color-alert-soft: #FBE8E5;
+
+  --color-border: #DCE6E3;        /* hairline borders, dividers */
+
+  /* ---- Type families ---- */
+  --font-display: 'Nunito Sans', system-ui, sans-serif;
+  --font-body: 'Public Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ---- Type scale ---- */
+  --text-xs: 0.8125rem;   /* 13px - captions, badges */
+  --text-sm: 0.9375rem;   /* 15px - secondary body */
+  --text-base: 1.0625rem; /* 17px - transcript body, kiosk-legible base */
+  --text-lg: 1.375rem;    /* 22px - card titles */
+  --text-xl: 1.875rem;    /* 30px - screen headings */
+  --text-2xl: 2.75rem;    /* 44px - mascot's spoken line, welcome headline */
+  --text-token: 5rem;     /* 80px - the final token number, must read from a few feet away */
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+
+  /* ---- Spacing scale (4px base) ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ---- Radius ---- */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 999px;
+
+  /* ---- Motion ---- */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-layout: 380ms;  /* StageLayout centered <-> split transition */
+
+  /* ---- Elevation ---- */
+  --shadow-card: 0 2px 12px rgba(28, 37, 33, 0.06);
+  --shadow-raised: 0 8px 24px rgba(28, 37, 33, 0.10);
+}
