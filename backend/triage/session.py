@@ -1,24 +1,31 @@
 import json
 import uuid
 
-from databases.redis_client import redis_client  
+from databases.redis_client import redis_client
 
-SESSION_TTL_SECONDS = 1800  
+SESSION_TTL_SECONDS = 1800
 SESSION_KEY_PREFIX = "triage_session:"
 
 
-def create_session() -> str:
+def create_session(hospital_id: int | None = None, kiosk_id: int | None = None) -> str:
     session_id = str(uuid.uuid4())
     state = {
         "stage": "greeting",
         "messages": [],
-        "symptom_data": {},
+        "symptom_data": {
+            "symptom": None,
+            "body_part": None,
+            "duration": None,
+            "severity": None,
+        },
         "patient_id": None,
         "department": None,
         "icd_code": None,
         "ai_impression": None,
         "doctor_options": [],
         "selected_doctor_id": None,
+        "hospital_id": hospital_id,
+        "kiosk_id": kiosk_id,
     }
     save_session(session_id, state)
     return session_id
