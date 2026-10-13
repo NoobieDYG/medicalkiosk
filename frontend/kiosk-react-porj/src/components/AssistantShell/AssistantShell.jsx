@@ -8,6 +8,9 @@ import TokenDisplay from '../../screens/TokenDisplay/TokenDisplay.jsx';
 const HOSPITAL_ID = 1;
 const KIOSK_ID = 1;
 
+// The address a patient's phone can reach the frontend at (used inside the QR code).
+const PUBLIC_BASE_URL = (import.meta.env.VITE_PUBLIC_BASE_URL || window.location.origin).replace(/\/$/, '');
+
 export default function AssistantShell() {
   const [screen, setScreen] = useState(SCREEN.WELCOME);
   const [token, setToken] = useState(null);
@@ -67,7 +70,14 @@ export default function AssistantShell() {
   }
 
   if (screen === SCREEN.TOKEN) {
-    return <TokenDisplay token={token} onReset={handleReset} />;
+    const slipUrl = token?.slip_id ? `${PUBLIC_BASE_URL}/s/${token.slip_id}` : null;
+    return (
+      <TokenDisplay
+        token={token?.token_number ?? token}
+        slipUrl={slipUrl}
+        onReset={handleReset}
+      />
+    );
   }
 
   return null;

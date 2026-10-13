@@ -1,0 +1,21 @@
+.token-display__slip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+}
+
+.token-display__slip svg {
+  padding: var(--space-2);
+  background: #fff;
+  border-radius: var(--radius-sm);
+}
+
+.token-display__slip-hint {
+  max-width: 320px;
+  margin: 0;
+  text-align: center;
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
