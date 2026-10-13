@@ -29,3 +29,4 @@ class TriageEndResponse(BaseModel):
     doctor_name: str
     department: str
     visit_id: int
+    slip_id: str | None = None

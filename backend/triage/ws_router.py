@@ -6,7 +6,7 @@ from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
 
 from databases.db import get_db
-from triage.logic import process_message
+from triage.logic import process_turn
 from triage.router import finalize_triage
 from triage.session import create_session, delete_session, get_session, save_session
 from triage.stages import TriageStage
@@ -17,14 +17,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["triage-ws"])
 
 
-async def send_assistant_reply(websocket: WebSocket, state: dict, reply: str, doctor_options=None):
-
+async def send_assistant_reply(
+    websocket: WebSocket,
+    state: dict,
+    reply: str,
+    doctor_options=None,
+    *,
+    send_confirmation_prompt: bool = True,
+):
     await websocket.send_json({"type": "assistant_text", "text": reply, "stage": state["stage"]})
 
     if doctor_options:
         await websocket.send_json({"type": "structured_data", "kind": "doctor_list", "items": doctor_options})
 
-    if state["stage"] == TriageStage.READY_TO_FINALIZE.value:
+    if send_confirmation_prompt and state["stage"] == TriageStage.READY_TO_FINALIZE.value:
         await websocket.send_json({"type": "awaiting_confirmation", "stage": state["stage"]})
 
     try:
@@ -32,6 +38,47 @@ async def send_assistant_reply(websocket: WebSocket, state: dict, reply: str, do
         await websocket.send_bytes(audio_bytes)
     except Exception:
         logger.exception("TTS synthesis failed, continuing with text-only reply")
+
+
+async def send_token(websocket: WebSocket, db: Session, session_id: str, state: dict) -> None:
+    result = finalize_triage(db, session_id, state)
+    await websocket.send_json(
+        {
+            "type": "token_issued",
+            "token": {
+                "token_number": result.token_number,
+                "doctor_name": result.doctor_name,
+                "department": result.department,
+                "visit_id": result.visit_id,
+                "slip_id": result.slip_id,
+            },
+        }
+    )
+
+
+async def handle_patient_turn(websocket: WebSocket, db: Session, session_id: str, state: dict, text: str) -> bool:
+    state["messages"].append({"role": "patient", "text": text})
+    result = process_turn(db, state, text)
+    state["messages"].append({"role": "assistant", "text": result.reply})
+    save_session(session_id, state)
+
+    await send_assistant_reply(
+        websocket,
+        state,
+        result.reply,
+        result.doctor_options,
+        send_confirmation_prompt=not result.finalize_requested,
+    )
+
+    if not result.finalize_requested:
+        return False
+
+    try:
+        await send_token(websocket, db, session_id, state)
+        return True
+    except HTTPException as exc:
+        await websocket.send_json({"type": "error", "detail": exc.detail})
+        return False
 
 
 @router.websocket("/ws/kiosk/{hospital_id}/{kiosk_id}")
@@ -61,23 +108,20 @@ async def triage_ws(hospital_id: int, kiosk_id: int, websocket: WebSocket, db: S
                 await websocket.send_json({"type": "error", "detail": "Session expired. Please reconnect."})
                 break
 
-            # --- binary frame: one recorded mic utterance ---
+            # Binary frame: one recorded mic utterance.
             if raw.get("bytes") is not None:
                 text = transcribe_audio(raw["bytes"])
 
                 if not text:
-                    await websocket.send_json({"type": "error", "detail": "Didn't catch that — please try again."})
+                    await websocket.send_json({"type": "error", "detail": "I did not catch that. Please try again."})
                     continue
 
-                state["messages"].append({"role": "patient", "text": text})
-                reply, doctor_options = process_message(db, state, text)
-                state["messages"].append({"role": "assistant", "text": reply})
-                save_session(session_id, state)
-
-                await send_assistant_reply(websocket, state, reply, doctor_options)
+                finalized = await handle_patient_turn(websocket, db, session_id, state, text)
+                if finalized:
+                    break
                 continue
 
-            # --- text frame: JSON control message ---
+            # Text frame: JSON control message.
             if raw.get("text") is None:
                 continue
 
@@ -86,26 +130,23 @@ async def triage_ws(hospital_id: int, kiosk_id: int, websocket: WebSocket, db: S
 
             if msg_type == "message":
                 text = payload.get("text", "")
-                state["messages"].append({"role": "patient", "text": text})
-                reply, doctor_options = process_message(db, state, text)
-                state["messages"].append({"role": "assistant", "text": reply})
-                save_session(session_id, state)
-
-                await send_assistant_reply(websocket, state, reply, doctor_options)
+                finalized = await handle_patient_turn(websocket, db, session_id, state, text)
+                if finalized:
+                    break
 
             elif msg_type == "selection":
                 doctor_id = payload.get("id")
-                match = next((d for d in state["doctor_options"] if d.get("id") == doctor_id), None)
+                match = next((doctor for doctor in state["doctor_options"] if doctor.get("id") == doctor_id), None)
 
                 if match is None:
                     await websocket.send_json(
-                        {"type": "error", "detail": "That doctor isn't in the current list — please pick again."}
+                        {"type": "error", "detail": "That doctor is not in the current list. Please pick again."}
                     )
                     continue
 
                 state["selected_doctor_id"] = doctor_id
                 state["stage"] = TriageStage.READY_TO_FINALIZE.value
-                reply = f"Great — you're booked with Dr. {match.get('name', 'the selected doctor')}. Confirm to get your token."
+                reply = f"Great - you are booked with Dr. {match.get('name', 'the selected doctor')}. Confirm to get your token."
                 state["messages"].append({"role": "assistant", "text": reply})
                 save_session(session_id, state)
 
@@ -113,22 +154,10 @@ async def triage_ws(hospital_id: int, kiosk_id: int, websocket: WebSocket, db: S
 
             elif msg_type == "end":
                 try:
-                    result = finalize_triage(db, session_id, state)
+                    await send_token(websocket, db, session_id, state)
                 except HTTPException as exc:
                     await websocket.send_json({"type": "error", "detail": exc.detail})
                     continue
-
-                await websocket.send_json(
-                    {
-                        "type": "token_issued",
-                        "token": {
-                            "token_number": result.token_number,
-                            "doctor_name": result.doctor_name,
-                            "department": result.department,
-                            "visit_id": result.visit_id,
-                        },
-                    }
-                )
                 break
 
             else:

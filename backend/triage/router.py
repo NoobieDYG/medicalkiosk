@@ -1,10 +1,12 @@
+import secrets
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from databases.db import get_db
-from doctor.doctors import get_doctor_by_id
 from databases.models import Queue, Triage, Visits
-from triage.logic import process_message
+from doctor.doctors import get_doctor_by_id
+from triage.logic import build_triage_impression, process_message
 from triage.schemas import (
     TriageEndRequest,
     TriageEndResponse,
@@ -43,17 +45,19 @@ def send_message(payload: TriageMessageRequest, db: Session = Depends(get_db)):
 
 
 def finalize_triage(db: Session, session_id: str, state: dict) -> TriageEndResponse:
-    """
-    Shared finalize logic used by both the REST /triage/end endpoint and the
-    WebSocket flow. Creates the Visit, Queue token, and Triage transcript
-    record, then deletes the Redis session. Raises HTTPException if the
-    session isn't actually ready to finalize.
-    """
+
     if state["stage"] != TriageStage.READY_TO_FINALIZE.value:
-        raise HTTPException(status_code=400, detail="Triage isn't finished yet — doctor hasn't been confirmed.")
+        raise HTTPException(status_code=400, detail="Triage is not finished yet - doctor has not been confirmed.")
+
+    if not state.get("patient_id"):
+        raise HTTPException(status_code=400, detail="Patient details are incomplete. Please continue the intake.")
 
     doctor = get_doctor_by_id(db, state["selected_doctor_id"])
-    symptom_summary = ", ".join(f"{k}: {v}" for k, v in state["symptom_data"].items() if v)
+    if doctor is None:
+        raise HTTPException(status_code=400, detail="Selected doctor was not found. Please choose again.")
+
+    symptom_summary = ", ".join(f"{key}: {value}" for key, value in state["symptom_data"].items() if value)
+    state["ai_impression"] = build_triage_impression(state["symptom_data"])
 
     visit = Visits(
         patient_id=state["patient_id"],
@@ -63,23 +67,32 @@ def finalize_triage(db: Session, session_id: str, state: dict) -> TriageEndRespo
         icd_code=state.get("icd_code"),
         ai_impression=state.get("ai_impression"),
         status="waiting",
-        hospital_id=state.get("hospital_id"),
+        hospital_id=state.get("hospital_id") or 1,
         kiosk_id=state.get("kiosk_id"),
+        slip_id=secrets.token_urlsafe(16),
     )
     db.add(visit)
     db.commit()
     db.refresh(visit)
 
+    hospital_id = state.get("hospital_id") or 1
     last_token = (
         db.query(Queue)
-        .filter(Queue.status == "waiting")
+        .filter(Queue.status == "waiting", Queue.hospital_id == hospital_id)
         .order_by(Queue.token_number.desc())
         .first()
     )
     next_token = (last_token.token_number + 1) if last_token else 1
 
-    db.add(Queue(visit_id=visit.id, token_number=next_token, status="waiting"))
-    db.add(Triage(visit_id=visit.id, conversation_json=state["messages"]))
+    db.add(
+        Queue(
+            visit_id=visit.id,
+            token_number=next_token,
+            status="waiting",
+            hospital_id=hospital_id,
+        )
+    )
+    db.add(Triage(visit_id=visit.id, conversation_json=state["messages"], hospital_id=hospital_id))
     db.commit()
 
     delete_session(session_id)
@@ -89,6 +102,7 @@ def finalize_triage(db: Session, session_id: str, state: dict) -> TriageEndRespo
         doctor_name=doctor.name,
         department=state["department"],
         visit_id=visit.id,
+        slip_id=visit.slip_id,
     )
 
 

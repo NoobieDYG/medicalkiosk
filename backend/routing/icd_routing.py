@@ -13,6 +13,12 @@ def map_symptom_to_department(db: Session, symptom: str, body_part: str = ""):
     if not query_text:
         return DEFAULT_DEPARTMENT, None
 
+    # The vector-distance operator is Postgres/pgvector-specific. Local SQLite
+    # runs use the same safe default routing without pretending similarity search
+    # is available.
+    if db.bind.dialect.name != "postgresql":
+        return DEFAULT_DEPARTMENT, None
+
     embedding = get_embedding(query_text)
     result = (
         db.query(ICDCodes, ICDCodes.embedding.cosine_distance(embedding).label("distance"))

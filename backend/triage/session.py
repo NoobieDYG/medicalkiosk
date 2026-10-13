@@ -1,10 +1,27 @@
 import json
+import time
 import uuid
+
+from redis.exceptions import RedisError
 
 from databases.redis_client import redis_client
 
 SESSION_TTL_SECONDS = 1800
 SESSION_KEY_PREFIX = "triage_session:"
+_memory_sessions: dict[str, tuple[float, dict]] = {}
+_redis_available: bool | None = None
+
+
+def _get_memory_session(session_id: str):
+    entry = _memory_sessions.get(session_id)
+    if entry is None:
+        return None
+
+    expires_at, state = entry
+    if expires_at <= time.monotonic():
+        _memory_sessions.pop(session_id, None)
+        return None
+    return state
 
 
 def create_session(hospital_id: int | None = None, kiosk_id: int | None = None) -> str:
@@ -12,11 +29,19 @@ def create_session(hospital_id: int | None = None, kiosk_id: int | None = None) 
     state = {
         "stage": "greeting",
         "messages": [],
+        "patient_data": {
+            "name": None,
+            "age": None,
+            "gender": None,
+            "phone": None,
+            "is_existing": False,
+        },
         "symptom_data": {
             "symptom": None,
             "body_part": None,
             "duration": None,
             "severity": None,
+            "red_flags": [],
         },
         "patient_id": None,
         "department": None,
@@ -32,13 +57,39 @@ def create_session(hospital_id: int | None = None, kiosk_id: int | None = None) 
 
 
 def get_session(session_id: str):
-    raw = redis_client.get(f"{SESSION_KEY_PREFIX}{session_id}")
-    return json.loads(raw) if raw else None
+    global _redis_available
+    if _redis_available is False:
+        return _get_memory_session(session_id)
+    try:
+        raw = redis_client.get(f"{SESSION_KEY_PREFIX}{session_id}")
+        _redis_available = True
+        if raw:
+            return json.loads(raw)
+    except RedisError:
+        _redis_available = False
+    return _get_memory_session(session_id)
 
 
 def save_session(session_id: str, state: dict) -> None:
-    redis_client.setex(f"{SESSION_KEY_PREFIX}{session_id}", SESSION_TTL_SECONDS, json.dumps(state))
+    global _redis_available
+    if _redis_available is False:
+        _memory_sessions[session_id] = (time.monotonic() + SESSION_TTL_SECONDS, state)
+        return
+    try:
+        redis_client.setex(f"{SESSION_KEY_PREFIX}{session_id}", SESSION_TTL_SECONDS, json.dumps(state))
+        _redis_available = True
+        _memory_sessions.pop(session_id, None)
+    except RedisError:
+        _redis_available = False
+        _memory_sessions[session_id] = (time.monotonic() + SESSION_TTL_SECONDS, state)
 
 
 def delete_session(session_id: str) -> None:
-    redis_client.delete(f"{SESSION_KEY_PREFIX}{session_id}")
+    global _redis_available
+    _memory_sessions.pop(session_id, None)
+    if _redis_available is False:
+        return
+    try:
+        redis_client.delete(f"{SESSION_KEY_PREFIX}{session_id}")
+    except RedisError:
+        _redis_available = False

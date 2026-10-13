@@ -25,7 +25,8 @@ class Doctors(Base):
     department = Column(String)
     phone = Column(VARCHAR(15))
     available = Column(Boolean, default=True)
-
+    email = Column(String, unique=True)
+    password_hash = Column(String)
 
 class DoctorSchedules(Base):
     __tablename__ = "doctor_schedules"
@@ -50,6 +51,11 @@ class Visits(Base):
     ai_impression = Column(String)
     status = Column(String, default="waiting")
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
+    diagnosis=Column(Text)
+    follow_ups=Column(Text)
+    prescription=Column(Text)
+    slip_id=Column(String, unique=True, index=True)
+    completed_at = Column(DateTime) 
 
 
 class Queue(Base):

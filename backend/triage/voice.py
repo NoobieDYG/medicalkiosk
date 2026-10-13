@@ -1,4 +1,5 @@
 import io
+import os
 import tempfile
 import wave
 
@@ -29,13 +30,18 @@ def get_piper_voice() -> PiperVoice:
 def transcribe_audio(audio_bytes: bytes) -> str:
 
     model = get_whisper_model()
+    tmp_path = None
+    try:
 
-    with tempfile.NamedTemporaryFile(suffix=".webm") as tmp:
-        tmp.write(audio_bytes)
-        tmp.flush()
+        with tempfile.NamedTemporaryFile(suffix=".webm",delete=False) as tmp:
+            tmp.write(audio_bytes)
+            tmp_path = tmp.name
+            tmp.flush()
         segments, _ = model.transcribe(tmp.name, beam_size=5)
         text = " ".join(segment.text.strip() for segment in segments)
-
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
     return text.strip()
 
 
